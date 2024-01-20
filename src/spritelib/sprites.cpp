@@ -103,7 +103,7 @@ SpriteEngine::~SpriteEngine()
   }
 }
 
-SpriteEntry *SpriteEngine::addSprite(Sprite sprite, uint16_t x, uint16_t y, uint16_t z_index)
+SpriteEntry *SpriteEngine::addSprite(Sprite *sprite, uint16_t x, uint16_t y, uint16_t z_index)
 {
   SpriteEntry *spriteEntry = new SpriteEntry();
   spriteEntry->sprite = sprite;
@@ -115,7 +115,7 @@ SpriteEntry *SpriteEngine::addSprite(Sprite sprite, uint16_t x, uint16_t y, uint
   return spriteEntry;
 }
 
-SpriteEntry *SpriteEngine::addSprite(Sprite sprite, uint16_t x, uint16_t y)
+SpriteEntry *SpriteEngine::addSprite(Sprite *sprite, uint16_t x, uint16_t y)
 {
   return this->addSprite(sprite, x, y, this->next_z_index++);
 }
@@ -166,9 +166,9 @@ void SpriteEngine::renderSprites(uint32_t *pixels, uint16_t width, uint16_t heig
           break;
         }
 
-        if (sprite->x <= x && sprite->y <= y && sprite->x + sprite->sprite.width > x && sprite->y + sprite->sprite.height > y)
+        if (sprite->x <= x && sprite->y <= y && sprite->x + sprite->sprite->width > x && sprite->y + sprite->sprite->height > y)
         {
-          uint32_t pixel = sprite->sprite.pixels[(y - sprite->y) * sprite->sprite.width + (x - sprite->x)];
+          uint32_t pixel = sprite->sprite->pixels[(y - sprite->y) * sprite->sprite->width + (x - sprite->x)];
           pixelLayerBuffer[layerCount++] = pixel;
           // is this opaque?
           if ((pixel >> 24) == 0xFF)

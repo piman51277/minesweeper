@@ -15,7 +15,7 @@ struct Sprite
 
 struct SpriteEntry
 {
-  Sprite sprite;
+  Sprite *sprite;
   uint16_t x;
   uint16_t y;
   // Higher z index means the sprite is rendered on top of other sprites
@@ -78,8 +78,8 @@ public:
    * @param y The y position of the sprite
    * @param [z_index] The z index of the sprite
    */
-  SpriteEntry *addSprite(Sprite sprite, uint16_t x, uint16_t y, uint16_t z_index);
-  SpriteEntry *addSprite(Sprite sprite, uint16_t x, uint16_t y);
+  SpriteEntry *addSprite(Sprite *sprite, uint16_t x, uint16_t y, uint16_t z_index);
+  SpriteEntry *addSprite(Sprite *sprite, uint16_t x, uint16_t y);
 
   /**
    * Moves a sprite to a new position
