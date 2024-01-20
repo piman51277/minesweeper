@@ -152,6 +152,15 @@ void SpriteEngine::removeSprite(SpriteEntry *sprite)
   delete sprite;
 }
 
+void SpriteEngine::clearSprites()
+{
+  for (SpriteEntry *sprite : this->sprites)
+  {
+    delete sprite;
+  }
+  this->sprites.clear();
+}
+
 void SpriteEngine::renderSprites(uint32_t *pixels, uint16_t width, uint16_t height)
 {
 
@@ -166,12 +175,12 @@ void SpriteEngine::renderSprites(uint32_t *pixels, uint16_t width, uint16_t heig
       {
         // optimization -> This assumes that there are many sprites with the same z_index
         // that aren't overlapping.
-        if (sprite->z_index >= lastZ || layerCount >= 10 || sprite->z_index == 0)
+        if (layerCount >= 10 || sprite->z_index == 0)
         {
           break;
         }
 
-        if (sprite->x <= x && sprite->y <= y && sprite->x + sprite->sprite->width > x && sprite->y + sprite->sprite->height > y)
+        if (sprite->x <= x && sprite->y <= y && sprite->x + sprite->sprite->width > x && sprite->y + sprite->sprite->height > y && sprite->z_index < lastZ)
         {
           uint32_t pixel = sprite->sprite->pixels[(y - sprite->y) * sprite->sprite->width + (x - sprite->x)];
           pixelLayerBuffer[layerCount++] = pixel;

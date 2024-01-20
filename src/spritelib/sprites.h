@@ -94,9 +94,15 @@ public:
   /**
    * Removes a sprite from the sprite engine. This is O(n) so it's not recommended to call this every frame.
    * Setting the z index to 0 is a better option.
+   * WARNING: This does not free the SpriteEntry. You must free it yourself.
    * @param sprite The sprite to remove
    */
   void removeSprite(SpriteEntry *sprite);
+
+  /**
+   * Removes all sprites from the sprite engine
+   */
+  void clearSprites();
 
   /**
    * Renders all sprites to a pixel array
