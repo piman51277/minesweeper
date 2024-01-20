@@ -71,10 +71,20 @@ ARGB composePair(ARGB a, ARGB b)
 
 uint32_t composePixels(uint32_t *pixels, uint8_t pixelCount)
 {
-  // if pixelCount is 1, just return it
+  // if pixelCount is 1
   if (pixelCount == 1)
   {
-    return pixels[0];
+    // if it is opaque just return it
+    if ((pixels[0] >> 24) == 0xFF)
+    {
+      return pixels[0];
+    }
+    // otherwise put solid white behind it
+    else
+    {
+      ARGB color = composePair(parseARGB8888(pixels[0]), parseARGB8888(0xFFFFFFFF));
+      return constructARGB8888(color);
+    }
   }
 
   ARGB working = parseARGB8888(pixels[pixelCount - 1]);
