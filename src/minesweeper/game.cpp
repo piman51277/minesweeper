@@ -9,7 +9,7 @@ MinesweeperGame::MinesweeperGame()
   this->boardState = new uint8_t[30 * 13];
   this->initizalized = false;
   this->gameOver = false;
-  this->minesRemaining = 90;
+  this->minesRemaining = 80;
   this->startTime = time(NULL);
   this->cursorX = 0;
   this->cursorY = 0;
@@ -102,7 +102,7 @@ void MinesweeperGame::reveal()
 
 void MinesweeperGame::reset()
 {
-  this->minesRemaining = 90;
+  this->minesRemaining = 80;
   this->startTime = time(NULL);
   this->gameOver = false;
   this->generateBoard();
