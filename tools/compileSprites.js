@@ -168,8 +168,6 @@ function encodeImage(width, height, data) {
     palette = uniqueColors;
   }
 
-  console.log("Palette size: " + palette.length);
-
   const paletteMap = {};
   for (let i = 0; i < palette.length; i++) {
     paletteMap[palette[i]] = i;
