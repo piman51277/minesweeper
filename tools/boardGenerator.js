@@ -110,7 +110,18 @@ if (!isMainThread) {
         }
       }
       return true;
+    }
 
+    numRevealed() {
+      let count = 0;
+      for (let i = 0; i < this.rows; i++) {
+        for (let j = 0; j < this.cols; j++) {
+          if (this.revealed[i][j]) {
+            count++;
+          }
+        }
+      }
+      return count;
     }
   }
 
@@ -199,6 +210,7 @@ if (!isMainThread) {
   function generateBoard() {
 
     const game = new MinesweeperGame(13, 30, 80);
+    let initialGuess = [0, 0]
     while (true) {
       game.reset();
 
@@ -212,7 +224,13 @@ if (!isMainThread) {
         }
 
       }
+      initialGuess = [x, y];
       game.reveal(x, y);
+
+      //we can't reveal more than 40% of the board on the first move
+      if (game.numRevealed() > (13 * 30 * 0.4)) {
+        continue;
+      }
 
       while (solver(game)) {
         continue;
@@ -223,6 +241,10 @@ if (!isMainThread) {
       }
     }
 
+    //reset only the revealed tiles
+    game.revealed = Array.from({ length: 13 }, () => Array.from({ length: 30 }, () => false));
+    game.reveal(...initialGuess);
+
     //encode the board into the correct format
     //195 bytes
     let buf = Buffer.alloc(195);
@@ -230,8 +252,11 @@ if (!isMainThread) {
     //for every pair of positions
     for (let i = 0; i < 30 * 13; i += 2) {
       //get the board values
-      let b1 = game.board[i];
-      let b2 = game.board[i + 1];
+      const b1 = game.board[i];
+      const b2 = game.board[i + 1];
+
+      const b1Good = game.revealed[Math.floor(i / 30)][i % 30];
+      const b2Good = game.revealed[Math.floor((i + 1) / 30)][(i + 1) % 30];
 
       /**
        * 0 -> generic space
@@ -239,11 +264,11 @@ if (!isMainThread) {
        * 2 -> ok starting spot (is a 0)
        */
 
-      b1 = b1 === 9 ? 1 : b1 === 0 ? 2 : 0;
-      b2 = b2 === 9 ? 1 : b2 === 0 ? 2 : 0;
+      const b1Code = b1 === 9 ? 1 : ((b1 == 0 && b1Good) ? 2 : 0);
+      const b2Code = b2 === 9 ? 1 : ((b2 == 0 && b2Good) ? 2 : 0);
 
       //encode them in a uint8
-      let val = ((b1 << 4 | b2) >> 0) & 0xff;
+      let val = ((b1Code << 4 | b2Code) >> 0) & 0xff;
       //write them to the buffer
       buf.writeUInt8(val, i / 2);
     }
@@ -282,6 +307,7 @@ if (!isMainThread) {
           process.stdout.cursorTo(0);
 
           if (boards.length === target) {
+            console.log();
             finish();
           }
         }

@@ -7,6 +7,9 @@ MinesweeperGame::MinesweeperGame()
   this->sprites = new Sprite[30];
   this->board = new uint8_t[30 * 13];
   this->boardState = new uint8_t[30 * 13];
+  this->boardPoolSize = 0;
+  this->boardPool = nullptr;
+  this->hasFirstMove = false;
   this->initizalized = false;
   this->gameOver = false;
   this->minesRemaining = 80;
@@ -22,7 +25,7 @@ MinesweeperGame::~MinesweeperGame()
     delete[] this->sprites[i].pixels;
   }
   delete[] this->sprites;
-
+  delete[] this->boardPool;
   delete[] this->board;
   delete[] this->boardState;
 }
@@ -30,7 +33,8 @@ MinesweeperGame::~MinesweeperGame()
 void MinesweeperGame::init()
 {
   this->loadSprites();
-  this->generateBoard();
+  this->loadBoardPool();
+  this->generateFakeBoard();
   std::fill(this->boardState, this->boardState + 30 * 13, 0);
   this->initizalized = true;
 }
@@ -76,6 +80,13 @@ void MinesweeperGame::flag()
 
 void MinesweeperGame::reveal()
 {
+  // first move is always safe
+  if (!this->hasFirstMove)
+  {
+    this->hasFirstMove = true;
+    this->generateBoard(this->cursorX, this->cursorY);
+  }
+
   if (this->gameOver)
     return;
 
@@ -105,7 +116,8 @@ void MinesweeperGame::reset()
   this->minesRemaining = 80;
   this->startTime = time(NULL);
   this->gameOver = false;
-  this->generateBoard();
+  this->hasFirstMove = false;
+  this->generateFakeBoard();
   std::fill(this->boardState, this->boardState + 30 * 13, 0);
 }
 
@@ -206,45 +218,112 @@ void MinesweeperGame::loadSprites()
   this->sprites[14] = loadSprite("assets/compiled/unchecked.sprite");
 }
 
-void MinesweeperGame::generateBoard()
+void MinesweeperGame::loadBoardPool()
 {
-  // TODO: Only load in solveable boards
-  //  generate the board
+  std::fstream file("assets/compiled/boards.bin");
+
+  if (!file.good())
+  {
+    std::cout << "File not found: assets/compiled/boards.bin" << std::endl;
+
+    // this will cause a crash, but it's better than silently failing
+    return;
+  }
+
+  file.read((char *)&this->boardPoolSize, 2);
+  this->boardPool = new uint8_t[this->boardPoolSize * (15 * 13)];
+  file.read((char *)this->boardPool, this->boardPoolSize * 15 * 13);
+  file.close();
+}
+
+void MinesweeperGame::generateFakeBoard()
+{
+  // until the user makes the first move, the board is not generated
+  // this just makes a placeholder board
+  // this is so the first move is always safe
+
   for (int i = 0; i < 30 * 13; i++)
   {
     this->board[i] = 0;
   }
+}
 
-  for (int i = 0; i < 90; i++)
-  {
-    int x = randUint8() % 30;
-    int y = randUint8() % 13;
-    this->board[x + y * 30] = 9;
-  }
+void MinesweeperGame::generateBoard(int firstX, int firstY)
+{
+  static int nextBoard = 0;
 
-  for (int x = 0; x < 30; x++)
+  // this finds a board where the first move is safe
+  int moveIndex = firstX + firstY * 30;
+
+  while (true)
   {
-    for (int y = 0; y < 13; y++)
+    // create a pointer to the start of the board
+    // its 2 tiles per byte, so its (30 / 2) * 13
+    uint8_t *boardEntry = this->boardPool + nextBoard * 15 * 13;
+
+    // look at the specific nibble containing the first move
+    uint8_t nibble = boardEntry[moveIndex / 2];
+
+    if ((moveIndex % 2) == 0)
     {
-      if (this->board[x + y * 30] == 9)
-        continue;
+      nibble = nibble >> 4;
+    }
 
-      int count = 0;
-      for (int dx = -1; dx <= 1; dx++)
+    // if it is 2, it's ok
+    if (nibble & 0x02)
+    {
+      // unpack the board
+      for (int i = 0; i < 15 * 13; i++)
       {
-        for (int dy = -1; dy <= 1; dy++)
+        uint8_t chunk = boardEntry[i];
+        bool isFirstMine = chunk & 0x10;
+        bool isSecondMine = chunk & 0x01;
+
+        if (isFirstMine)
+          this->board[i * 2] = 9;
+        else
+          this->board[i * 2] = 0;
+
+        if (isSecondMine)
+          this->board[i * 2 + 1] = 9;
+        else
+          this->board[i * 2 + 1] = 0;
+      }
+
+      // fill in the numbered tiles
+      for (int x = 0; x < 30; x++)
+      {
+        for (int y = 0; y < 13; y++)
         {
-          if (x + dx < 0 || x + dx >= 30 || y + dy < 0 || y + dy >= 13)
+          if (this->board[x + y * 30] == 9)
             continue;
 
-          if (this->board[(x + dx) + (y + dy) * 30] == 9)
-            count++;
+          int count = 0;
+          for (int dx = -1; dx <= 1; dx++)
+          {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+              if (x + dx >= 0 && x + dx < 30 && y + dy >= 0 && y + dy < 13)
+              {
+                if (this->board[x + dx + (y + dy) * 30] == 9)
+                {
+                  count++;
+                }
+              }
+            }
+          }
+          this->board[x + y * 30] = count;
         }
       }
 
-      this->board[x + y * 30] = count;
+      break;
     }
+
+    nextBoard = (nextBoard + 1) % this->boardPoolSize;
   }
+
+  // force the next board to be different
+  nextBoard = (nextBoard + 1) % this->boardPoolSize;
 }
 
 void MinesweeperGame::revealTile(int x, int y)

@@ -6,6 +6,8 @@
 
 extern std::function<int()> randUInt8;
 
+const int ENCODED_BOARD_SIZE = 195;
+
 /** Sprite ID list (WIP)
  * 0-8: number of adjacent mines tile
  * 9: mine (unexploded)
@@ -39,6 +41,11 @@ private:
   SpriteEngine displayEngine;
   Sprite *sprites;
 
+  uint16_t boardPoolSize;
+  uint8_t *boardPool;
+
+  bool hasFirstMove;
+
   /**
    * 0: empty
    * 1-8: number of adjacent mines
@@ -59,7 +66,11 @@ private:
 
   void loadSprites();
 
-  void generateBoard();
+  void loadBoardPool();
+
+  void generateFakeBoard();
+
+  void generateBoard(int firstX, int firstY);
 
   void revealTile(int x, int y);
 
