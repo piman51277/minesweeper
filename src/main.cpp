@@ -1,6 +1,6 @@
 #include <SDL2/SDL.h>
 #include <iostream>
-#include "spritelib/sprites.h"
+#include "minesweeper/game.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,58 +13,60 @@ int main(int argc, char *argv[])
   SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
   SDL_RenderSetLogicalSize(renderer, 480, 240);
 
-  // create a pixel array
-  Uint32 *pixels = new Uint32[480 * 240];
+  MinesweeperGame game;
+  game.init();
 
-  // set all pixels to white
-  for (int i = 0; i < 480 * 240; i++)
-  {
-    pixels[i] = 0xFFFFFFFF;
-  }
+  uint32_t *pixels = new uint32_t[480 * 240];
 
-  SpriteEngine engine;
-
-  Sprite tile1 = loadSprite("assets/compiled/tile1.sprite");
-  Sprite tile2 = loadSprite("assets/compiled/tile2.sprite");
-  Sprite tile3 = loadSprite("assets/compiled/tile3.sprite");
-  Sprite tile4 = loadSprite("assets/compiled/tile4.sprite");
-  Sprite tile5 = loadSprite("assets/compiled/tile5.sprite");
-  Sprite tile6 = loadSprite("assets/compiled/tile6.sprite");
-  Sprite tile7 = loadSprite("assets/compiled/tile7.sprite");
-  Sprite tile8 = loadSprite("assets/compiled/tile8.sprite");
-  Sprite flag = loadSprite("assets/compiled/flag.sprite");
-  Sprite mine = loadSprite("assets/compiled/mine.sprite");
-  Sprite unchecked = loadSprite("assets/compiled/unchecked.sprite");
-  Sprite mine_exploded = loadSprite("assets/compiled/mine-exploded.sprite");
-
-  // add a sprite to the engine
-  engine.addSprite(&tile1, 0, 0, 1);
-  engine.addSprite(&tile2, 16, 0, 1);
-  engine.addSprite(&tile3, 32, 0, 1);
-  engine.addSprite(&tile4, 48, 0, 1);
-  engine.addSprite(&tile5, 64, 0, 1);
-  engine.addSprite(&tile6, 80, 0, 1);
-  engine.addSprite(&tile7, 96, 0, 1);
-  engine.addSprite(&tile8, 112, 0, 1);
-  engine.addSprite(&flag, 128, 0, 1);
-  engine.addSprite(&mine, 144, 0, 1);
-  engine.addSprite(&unchecked, 160, 0, 1);
-  engine.addSprite(&mine_exploded, 176, 0, 1);
   while (true)
   {
     SDL_Event e;
-    if (SDL_PollEvent(&e))
+    while (SDL_PollEvent(&e))
     {
       if (e.type == SDL_QUIT)
       {
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
+        SDL_Quit();
+        delete[] pixels;
+        return 0;
         break;
+      }
+
+      // keypresses
+      if (e.type == SDL_KEYDOWN)
+      {
+        switch (e.key.keysym.sym)
+        {
+        case SDLK_UP:
+          game.moveCursor(0, -1);
+          break;
+        case SDLK_DOWN:
+          game.moveCursor(0, 1);
+          break;
+        case SDLK_LEFT:
+          game.moveCursor(-1, 0);
+          break;
+        case SDLK_RIGHT:
+          game.moveCursor(1, 0);
+          break;
+        case SDLK_SPACE:
+          game.reveal();
+          break;
+        case SDLK_f:
+          game.flag();
+          break;
+        case SDLK_r:
+          game.reset();
+          break;
+        }
       }
     }
 
+    // render the game
+    game.render(pixels, 480, 240);
+
     // create a texture from the pixel array
-    engine.renderSprites(pixels, 480, 240);
     SDL_Texture *texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, 480, 240);
     SDL_UpdateTexture(texture, NULL, pixels, 480 * sizeof(Uint32));
 
@@ -73,7 +75,7 @@ int main(int argc, char *argv[])
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
 
-    SDL_Delay(20);
+    SDL_Delay(33);
   }
 
   return 0;
