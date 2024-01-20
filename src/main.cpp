@@ -24,14 +24,32 @@ int main(int argc, char *argv[])
 
   SpriteEngine engine;
 
+  Sprite tile1 = loadSprite("assets/compiled/tile1.sprite");
+  Sprite tile2 = loadSprite("assets/compiled/tile2.sprite");
+  Sprite tile3 = loadSprite("assets/compiled/tile3.sprite");
+  Sprite tile4 = loadSprite("assets/compiled/tile4.sprite");
+  Sprite tile5 = loadSprite("assets/compiled/tile5.sprite");
+  Sprite tile6 = loadSprite("assets/compiled/tile6.sprite");
+  Sprite tile7 = loadSprite("assets/compiled/tile7.sprite");
+  Sprite tile8 = loadSprite("assets/compiled/tile8.sprite");
+  Sprite flag = loadSprite("assets/compiled/flag.sprite");
+  Sprite mine = loadSprite("assets/compiled/mine.sprite");
+  Sprite unchecked = loadSprite("assets/compiled/unchecked.sprite");
+  Sprite mine_exploded = loadSprite("assets/compiled/mine-exploded.sprite");
+
   // add a sprite to the engine
-  SpriteEntry *redSq = engine.addSprite(loadSprite("assets/compiled/redsquare.bin"), 30, 10, 1);
-  SpriteEntry *bluSq = engine.addSprite(loadSprite("assets/compiled/bluesquare.bin"), 160, 60, 2);
-  SpriteEntry *greSq = engine.addSprite(loadSprite("assets/compiled/greensquare.bin"), 110, 60, 3);
-
-  int pos = 10;
-  bool toRight = true;
-
+  engine.addSprite(&tile1, 0, 0, 1);
+  engine.addSprite(&tile2, 16, 0, 1);
+  engine.addSprite(&tile3, 32, 0, 1);
+  engine.addSprite(&tile4, 48, 0, 1);
+  engine.addSprite(&tile5, 64, 0, 1);
+  engine.addSprite(&tile6, 80, 0, 1);
+  engine.addSprite(&tile7, 96, 0, 1);
+  engine.addSprite(&tile8, 112, 0, 1);
+  engine.addSprite(&flag, 128, 0, 1);
+  engine.addSprite(&mine, 144, 0, 1);
+  engine.addSprite(&unchecked, 160, 0, 1);
+  engine.addSprite(&mine_exploded, 176, 0, 1);
   while (true)
   {
     SDL_Event e;
@@ -44,25 +62,6 @@ int main(int argc, char *argv[])
         break;
       }
     }
-
-    if (toRight)
-    {
-      pos += 2;
-      if (pos > 300)
-      {
-        toRight = false;
-      }
-    }
-    else
-    {
-      pos -= 2;
-      if (pos < 10)
-      {
-        toRight = true;
-      }
-    }
-
-    engine.moveSprite(redSq, pos, 10);
 
     // create a texture from the pixel array
     engine.renderSprites(pixels, 480, 240);
