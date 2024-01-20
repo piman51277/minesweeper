@@ -11,7 +11,7 @@ MinesweeperGame::MinesweeperGame()
   this->boardPool = nullptr;
   this->hasFirstMove = false;
   this->initizalized = false;
-  this->gameOver = false;
+  this->gameState = 0;
   this->minesRemaining = 80;
   this->startTime = time(NULL);
   this->cursorX = 0;
@@ -56,7 +56,7 @@ void MinesweeperGame::moveCursor(int x, int y)
 
 void MinesweeperGame::flag()
 {
-  if (this->gameOver)
+  if (this->gameState != 0)
     return;
 
   uint8_t state = this->boardState[this->cursorX + this->cursorY * 30];
@@ -76,6 +76,12 @@ void MinesweeperGame::flag()
     this->boardState[this->cursorX + this->cursorY * 30] |= 0b01000000;
     this->minesRemaining--;
   }
+
+  if (this->hasWon())
+  {
+    this->revealAllMines();
+    this->gameState = 1;
+  }
 }
 
 void MinesweeperGame::reveal()
@@ -87,7 +93,7 @@ void MinesweeperGame::reveal()
     this->generateBoard(this->cursorX, this->cursorY);
   }
 
-  if (this->gameOver)
+  if (this->gameState != 0)
     return;
 
   uint8_t state = this->boardState[this->cursorX + this->cursorY * 30];
@@ -104,18 +110,24 @@ void MinesweeperGame::reveal()
   if (this->board[this->cursorX + this->cursorY * 30] == 9)
   {
     this->revealAllMines();
-    this->gameOver = true;
+    this->gameState = 2;
     return;
   }
 
   this->revealTile(this->cursorX, this->cursorY);
+
+  if (this->hasWon())
+  {
+    this->revealAllMines();
+    this->gameState = 1;
+  }
 }
 
 void MinesweeperGame::reset()
 {
   this->minesRemaining = 80;
   this->startTime = time(NULL);
-  this->gameOver = false;
+  this->gameState = 0;
   this->hasFirstMove = false;
   this->generateFakeBoard();
   std::fill(this->boardState, this->boardState + 30 * 13, 0);
@@ -149,7 +161,7 @@ void MinesweeperGame::render(uint32_t *pixels, uint16_t width, uint16_t height)
         if (isMine)
         {
           // has everything exploded yet?
-          if (this->gameOver && !flagged)
+          if (this->gameState == 2 && !flagged)
           {
             baseSpriteID = 10;
           }
@@ -173,7 +185,7 @@ void MinesweeperGame::render(uint32_t *pixels, uint16_t width, uint16_t height)
       if (flagged)
       {
         // has everything exploded yet?
-        if (this->gameOver && isMine)
+        if (this->gameState != 0 && isMine)
         {
           overlaySpriteID = 12;
         }
@@ -364,7 +376,6 @@ void MinesweeperGame::revealTile(int x, int y)
 
 void MinesweeperGame::revealAllMines()
 {
-  this->gameOver = true;
   for (int x = 0; x < 30; x++)
   {
     for (int y = 0; y < 13; y++)
@@ -375,4 +386,34 @@ void MinesweeperGame::revealAllMines()
       }
     }
   }
+}
+
+bool MinesweeperGame::hasWon()
+{
+  if (this->minesRemaining != 0)
+    return false;
+
+  // All tiles must be either revealed or flagged
+  for (int x = 0; x < 30; x++)
+  {
+    for (int y = 0; y < 13; y++)
+    {
+      uint8_t state = this->boardState[x + y * 30];
+      bool revealed = state & 0b10000000;
+      bool flagged = state & 0b01000000;
+
+      if (this->board[x + y * 30] == 9)
+      {
+        if (!flagged)
+          return false;
+      }
+      else
+      {
+        if (!revealed)
+          return false;
+      }
+    }
+  }
+
+  return true;
 }

@@ -61,7 +61,13 @@ private:
   uint8_t *boardState;
   int minesRemaining;
   time_t startTime;
-  bool gameOver;
+
+  /**
+   * 0: playing
+   * 1: win
+   * 2: lose
+   */
+  int gameState;
   bool initizalized;
 
   void loadSprites();
@@ -75,4 +81,6 @@ private:
   void revealTile(int x, int y);
 
   void revealAllMines();
+
+  bool hasWon();
 };
