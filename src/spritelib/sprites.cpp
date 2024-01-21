@@ -116,7 +116,6 @@ SpriteEntry *SpriteEngine::addSprite(Sprite *sprite, uint16_t x, uint16_t y, uin
   spriteEntry->y = y;
   spriteEntry->z_index = z_index;
   this->sprites.push_back(spriteEntry);
-  this->reshuffleSprites();
   return spriteEntry;
 }
 
@@ -133,7 +132,6 @@ void SpriteEngine::moveSprite(SpriteEntry *sprite, uint16_t x, uint16_t y, uint1
   sprite->x = x;
   sprite->y = y;
   sprite->z_index = z_index;
-  this->reshuffleSprites();
 }
 
 void SpriteEngine::moveSprite(SpriteEntry *sprite, uint16_t x, uint16_t y)
@@ -163,7 +161,7 @@ void SpriteEngine::clearSprites()
 
 void SpriteEngine::renderSprites(uint32_t *pixels, uint16_t width, uint16_t height)
 {
-
+  this->reshuffleSprites();
   uint32_t *pixelLayerBuffer = new uint32_t[10];
   for (int x = 0; x < width; x++)
   {
