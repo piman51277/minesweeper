@@ -14,6 +14,7 @@ MinesweeperGame::MinesweeperGame()
   this->gameState = 0;
   this->minesRemaining = 80;
   this->startTime = time(NULL);
+  this->endTime = time(NULL);
   this->cursorX = 0;
   this->cursorY = 0;
 }
@@ -81,6 +82,7 @@ void MinesweeperGame::flag()
   {
     this->revealAllMines();
     this->gameState = 1;
+    this->endTime = time(NULL);
   }
 }
 
@@ -111,6 +113,7 @@ void MinesweeperGame::reveal()
   {
     this->revealAllMines();
     this->gameState = 2;
+    this->endTime = time(NULL);
     return;
   }
 
@@ -120,6 +123,7 @@ void MinesweeperGame::reveal()
   {
     this->revealAllMines();
     this->gameState = 1;
+    this->endTime = time(NULL);
   }
 }
 
@@ -127,6 +131,7 @@ void MinesweeperGame::reset()
 {
   this->minesRemaining = 80;
   this->startTime = time(NULL);
+  this->endTime = time(NULL);
   this->gameState = 0;
   this->hasFirstMove = false;
   this->generateFakeBoard();
@@ -143,7 +148,56 @@ void MinesweeperGame::render(uint32_t *pixels, uint16_t width, uint16_t height)
 
   this->displayEngine.clearSprites();
 
-  // add all the required sprites
+  // topbar
+
+  // background
+  for (int x = 0; x <= 480 - 32; x += 32)
+  {
+    this->displayEngine.addSprite(&this->sprites[15], x, 0, 1);
+  }
+
+  // smiley
+  int smileyID = 16;
+  if (this->gameState == 1)
+  {
+    smileyID = 18;
+  }
+  else if (this->gameState == 2)
+  {
+    smileyID = 17;
+  }
+  this->displayEngine.addSprite(&this->sprites[smileyID], 480 / 2 - 16, 0, 2);
+
+  // timer
+  time_t currentTime = time(NULL);
+  int timeElapsed = this->gameState != 0 ? this->endTime - this->startTime : currentTime - this->startTime;
+
+  int time100 = timeElapsed / 100;
+  int time10 = (timeElapsed / 10) % 10;
+  int time1 = timeElapsed % 10;
+
+  this->displayEngine.addSprite(&this->sprites[20 + time100], 480 - 48, 0, 2);
+  this->displayEngine.addSprite(&this->sprites[20 + time10], 480 - 32, 0, 2);
+  this->displayEngine.addSprite(&this->sprites[20 + time1], 480 - 16, 0, 2);
+
+  // mines remaining
+  int mines10 = (this->minesRemaining / 10) % 10;
+  int mines1 = this->minesRemaining % 10;
+
+  // since we actually only have 80 mines, this one is special
+  int mines100 = 19;
+  if (this->minesRemaining < 0)
+  {
+    mines100 = 30;
+    mines10 = (-this->minesRemaining / 10) % 10;
+    mines1 = -this->minesRemaining % 10;
+  }
+
+  this->displayEngine.addSprite(&this->sprites[mines100], 0, 0, 2);
+  this->displayEngine.addSprite(&this->sprites[20 + mines10], 16, 0, 2);
+  this->displayEngine.addSprite(&this->sprites[20 + mines1], 32, 0, 2);
+
+  // the grid
   for (int x = 0; x < 30; x++)
   {
     for (int y = 0; y < 13; y++)
@@ -228,6 +282,22 @@ void MinesweeperGame::loadSprites()
   this->sprites[12] = loadSprite("assets/compiled/defused.sprite");
   this->sprites[13] = loadSprite("assets/compiled/cursor.sprite");
   this->sprites[14] = loadSprite("assets/compiled/unchecked.sprite");
+  this->sprites[15] = loadSprite("assets/compiled/top-tile.sprite");
+  this->sprites[16] = loadSprite("assets/compiled/state-normal.sprite");
+  this->sprites[17] = loadSprite("assets/compiled/state-loss.sprite");
+  this->sprites[18] = loadSprite("assets/compiled/state-victory.sprite");
+  this->sprites[19] = loadSprite("assets/compiled/7seg-empty.sprite");
+  this->sprites[20] = loadSprite("assets/compiled/7seg-0.sprite");
+  this->sprites[21] = loadSprite("assets/compiled/7seg-1.sprite");
+  this->sprites[22] = loadSprite("assets/compiled/7seg-2.sprite");
+  this->sprites[23] = loadSprite("assets/compiled/7seg-3.sprite");
+  this->sprites[24] = loadSprite("assets/compiled/7seg-4.sprite");
+  this->sprites[25] = loadSprite("assets/compiled/7seg-5.sprite");
+  this->sprites[26] = loadSprite("assets/compiled/7seg-6.sprite");
+  this->sprites[27] = loadSprite("assets/compiled/7seg-7.sprite");
+  this->sprites[28] = loadSprite("assets/compiled/7seg-8.sprite");
+  this->sprites[29] = loadSprite("assets/compiled/7seg-9.sprite");
+  this->sprites[30] = loadSprite("assets/compiled/7seg-neg.sprite");
 }
 
 void MinesweeperGame::loadBoardPool()

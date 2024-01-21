@@ -16,7 +16,13 @@ const int ENCODED_BOARD_SIZE = 195;
  * 12: flag (exploded)
  * 13: cursor
  * 14: unrevealed tile
- * ...
+ * 15: empty topbar tile
+ * 16: neutral smiley
+ * 17: loss smiley
+ * 18: win smiley
+ * 19: empty 7seg
+ * 20-29: 7seg 0-9
+ * 30: negative 7seg
  */
 
 class MinesweeperGame
@@ -61,6 +67,7 @@ private:
   uint8_t *boardState;
   int minesRemaining;
   time_t startTime;
+  time_t endTime;
 
   /**
    * 0: playing
