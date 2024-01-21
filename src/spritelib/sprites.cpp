@@ -162,43 +162,34 @@ void SpriteEngine::clearSprites()
 void SpriteEngine::renderSprites(uint32_t *pixels, uint16_t width, uint16_t height)
 {
   this->reshuffleSprites();
-  uint32_t *pixelLayerBuffer = new uint32_t[10];
-  for (int x = 0; x < width; x++)
+
+  // set all pixels to white
+  std::fill(pixels, pixels + width * height, 0xFFFFFFFF);
+
+  uint32_t *pixelLayerBuffer = new uint32_t[2];
+
+  for (SpriteEntry *sprite : this->sprites)
   {
-    for (int y = 0; y < height; y++)
+    for (int x = sprite->x; x < sprite->x + sprite->sprite->width; x++)
     {
-      uint16_t lastZ = 65535;
-      int layerCount = 0;
-      for (SpriteEntry *sprite : this->sprites)
+      for (int y = sprite->y; y < sprite->y + sprite->sprite->height; y++)
       {
-        // optimization -> This assumes that there are many sprites with the same z_index
-        // that aren't overlapping.
-        if (layerCount >= 10 || sprite->z_index == 0)
+        if (x < 0 || x >= width || y < 0 || y >= height)
+          continue;
+
+        uint32_t pixel = sprite->sprite->pixels[(y - sprite->y) * sprite->sprite->width + (x - sprite->x)];
+        // is this opaque?
+        if ((pixel >> 24) == 0xFF)
         {
-          break;
+          pixels[y * width + x] = pixel;
         }
-
-        if (sprite->x <= x && sprite->y <= y && sprite->x + sprite->sprite->width > x && sprite->y + sprite->sprite->height > y && sprite->z_index < lastZ)
+        else
         {
-          uint32_t pixel = sprite->sprite->pixels[(y - sprite->y) * sprite->sprite->width + (x - sprite->x)];
-          pixelLayerBuffer[layerCount++] = pixel;
-          // is this opaque?
-          if ((pixel >> 24) == 0xFF)
-          {
-            break;
-          }
-
-          lastZ = sprite->z_index;
+          // compose with the pixel already there
+          pixelLayerBuffer[0] = pixels[y * width + x];
+          pixelLayerBuffer[1] = pixel;
+          pixels[y * width + x] = composePixels(pixelLayerBuffer, 2);
         }
-      }
-
-      if (layerCount > 0)
-      {
-        pixels[y * width + x] = composePixels(pixelLayerBuffer, layerCount);
-      }
-      else
-      {
-        pixels[y * width + x] = 0xFFFFFFFF;
       }
     }
   }
@@ -209,5 +200,5 @@ void SpriteEngine::renderSprites(uint32_t *pixels, uint16_t width, uint16_t heig
 void SpriteEngine::reshuffleSprites()
 {
   std::sort(this->sprites.begin(), this->sprites.end(), [](SpriteEntry *a, SpriteEntry *b)
-            { return a->z_index > b->z_index; });
+            { return a->z_index < b->z_index; });
 }
